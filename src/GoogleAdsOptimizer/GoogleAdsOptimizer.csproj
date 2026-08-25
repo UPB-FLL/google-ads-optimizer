@@ -44,6 +44,34 @@
     <Resource Include="Resources\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Models\" />
+    <Folder Include="Views\" />
+    <Folder Include="ViewModels\" />
+    <Folder Include="Services\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Ads.GoogleAds" Version="20.1.0" />
+    <PackageReference Include="Azure.AI.OpenAI" Version="1.0.0" />
+    <PackageReference Include="Azure.Core" Version="1.38.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="MaterialDesignThemes" Version="4.9.0" />
+    <PackageReference Include="MaterialDesignColors" Version="2.1.4" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="copy /Y &quot;$(TargetPath)&quot; &quot;$(ProjectDir)bin\$(Configuration)\GoogleAdsOptimizer.exe&quot;" />
+  </Target>
+
+  <Target Name="CreateInstaller" AfterTargets="Build" Condition=" '$(Configuration)' == 'Release' ">
+    <Exec Command="cd build && candle.exe GoogleAdsOptimizer.wxs" />
+    <Exec Command="cd build && light.exe -out GoogleAdsOptimizer.msi GoogleAdsOptimizer.wixobj" />
+  </Target>
+
   <Target Name="PublishWinExe" AfterTargets="Publish">
     <Exec Command="copy /Y &quot;$(TargetPath)&quot; &quot;$(PublishDir)GoogleAdsOptimizer.exe&quot;" />
   </Target>

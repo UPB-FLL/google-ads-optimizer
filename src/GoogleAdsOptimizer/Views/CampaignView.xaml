@@ -1,0 +1,281 @@
+<Page x:Class="GoogleAdsOptimizer.Views.CampaignView"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+      Title="Campaign Analysis"
+      Background="{DynamicResource MaterialDesignPaper}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <materialDesign:ColorZone Grid.Row="0" Mode="PrimaryMid" Padding="16"
+                                  materialDesign:Elevation="Dp4">
+            <DockPanel>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                           ToolTip="Export to Google Ads Editor"
+                           Click="ExportToEditor_Click">
+                        <materialDesign:PackIcon Kind="Export"/>
+                    </Button>
+                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                           ToolTip="Refresh"
+                           Click="Refresh_Click">
+                        <materialDesign:PackIcon Kind="Refresh"/>
+                    </Button>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="ChartLine" Width="32" Height="32"
+                                           VerticalAlignment="Center" Margin="0,0,16,0"/>
+                    <TextBlock Text="Campaign Analysis" FontSize="24" FontWeight="Bold"
+                              VerticalAlignment="Center"/>
+                </StackPanel>
+            </DockPanel>
+        </materialDesign:ColorZone>
+
+        <!-- Controls -->
+        <Grid Grid.Row="1" Margin="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <ComboBox materialDesign:HintAssist.Hint="Select Campaign"
+                         Width="300" Margin="0,0,16,0"
+                         x:Name="CampaignComboBox"
+                         SelectionChanged="CampaignComboBox_SelectionChanged"/>
+
+                <DatePicker materialDesign:HintAssist.Hint="Start Date"
+                          Width="150" Margin="0,0,8,0"
+                          x:Name="StartDatePicker"/>
+
+                <DatePicker materialDesign:HintAssist.Hint="End Date"
+                          Width="150" Margin="0,0,8,0"
+                          x:Name="EndDatePicker"/>
+
+                <Button Style="{StaticResource MaterialDesignRaisedButton}"
+                       Content="Analyze" Click="Analyze_Click"/>
+            </StackPanel>
+
+            <TextBlock Grid.Column="1" x:Name="StatusText"
+                      Text="No campaign selected"
+                      VerticalAlignment="Center"
+                      Foreground="{DynamicResource MaterialDesignBody}"/>
+        </Grid>
+
+        <!-- Content Tabs -->
+        <TabControl Grid.Row="2" materialDesign:Elevation="Dp4">
+            <!-- Overview Tab -->
+            <TabItem Header="Overview">
+                <ScrollViewer>
+                    <StackPanel Margin="16" Spacing="16">
+                        <!-- Analysis Summary -->
+                        <materialDesign:Card Padding="16">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Overall Score" FontSize="14"
+                                              Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                                    <TextBlock x:Name="OverallScoreText" Text="--/100"
+                                              FontSize="32" FontWeight="Bold"
+                                              Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="ROI" FontSize="14"
+                                              Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                                    <TextBlock x:Name="ROIText" Text="--%"
+                                              FontSize="32" FontWeight="Bold"
+                                              Foreground="{DynamicResource SuccessBrush}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Conversion Rate" FontSize="14"
+                                              Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                                    <TextBlock x:Name="ConversionRateText" Text="--%"
+                                              FontSize="32" FontWeight="Bold"
+                                              Foreground="{DynamicResource InfoBrush}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="3">
+                                    <TextBlock Text="Budget Usage" FontSize="14"
+                                              Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                                    <TextBlock x:Name="BudgetUsageText" Text="--%"
+                                              FontSize="32" FontWeight="Bold"
+                                              Foreground="{DynamicResource WarningBrush}"/>
+                                </StackPanel>
+                            </Grid>
+                        </materialDesign:Card>
+
+                        <!-- Campaign Performance Details -->
+                        <materialDesign:Card Padding="16">
+                            <StackPanel>
+                                <TextBlock Text="Campaign Performance" FontSize="18"
+                                          FontWeight="Bold" Margin="0,0,0,16"/>
+
+                                <DataGrid ItemsSource="{Binding AnalysisResults}"
+                                         AutoGenerateColumns="False"
+                                         IsReadOnly="True"
+                                         Height="200">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Metric" Binding="{Binding Metric}" Width="*"/>
+                                        <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*"/>
+                                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </materialDesign:Card>
+
+                        <!-- Recommendations -->
+                        <materialDesign:Card Padding="16">
+                            <StackPanel>
+                                <TextBlock Text="AI-Powered Recommendations" FontSize="18"
+                                          FontWeight="Bold" Margin="0,0,0,16"/>
+
+                                <ItemsControl ItemsSource="{Binding Recommendations}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <materialDesign:Card Margin="0,0,0,8" Padding="12"
+                                                             Background="{DynamicResource MaterialDesignCardBackground}">
+                                                <StackPanel>
+                                                    <TextBlock FontWeight="Bold"
+                                                              Text="{Binding Title}"/>
+                                                    <TextBlock Text="{Binding Description}"
+                                                              Margin="0,4,0,8"
+                                                              TextWrapping="Wrap"/>
+                                                    <Border Background="{DynamicResource PrimaryHueLightBrush}"
+                                                           Padding="8" CornerRadius="4">
+                                                        <TextBlock Text="{Binding Action}"
+                                                                  Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                                                    </Border>
+                                                </StackPanel>
+                                            </materialDesign:Card>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </materialDesign:Card>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Ad Groups Tab -->
+            <TabItem Header="Ad Groups">
+                <DataGrid ItemsSource="{Binding AdGroups}"
+                         AutoGenerateColumns="False"
+                         IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
+                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100"/>
+                        <DataGridTextColumn Header="Impressions" Binding="{Binding Impressions}" Width="100"/>
+                        <DataGridTextColumn Header="Clicks" Binding="{Binding Clicks}" Width="80"/>
+                        <DataGridTextColumn Header="Cost" Binding="{Binding Cost, StringFormat='C2'}" Width="80"/>
+                        <DataGridTextColumn Header="Conversions" Binding="{Binding Conversions}" Width="100"/>
+                        <DataGridTextColumn Header="CTR" Binding="{Binding CTR, StringFormat='F2}%'}" Width="80"/>
+                        <DataGridTextColumn Header="CPA" Binding="{Binding CPA, StringFormat='C2'}" Width="80"/>
+                        <DataGridTextColumn Header="Score" Binding="{Binding PerformanceScore, StringFormat='F0'}" Width="80"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <!-- Ads Tab -->
+            <TabItem Header="Ads">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Top Performing Ads -->
+                    <materialDesign:Card Grid.Row="0" Margin="8" Padding="16">
+                        <StackPanel>
+                            <TextBlock Text="Top Performing Ads" FontSize="16"
+                                      FontWeight="Bold" Margin="0,0,0,12"
+                                      Foreground="{DynamicResource SuccessBrush}"/>
+
+                            <DataGrid ItemsSource="{Binding TopAds}"
+                                     AutoGenerateColumns="False"
+                                     IsReadOnly="True"
+                                     Height="300">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Headline" Binding="{Binding Headline}" Width="*"/>
+                                    <DataGridTextColumn Header="Impressions" Binding="{Binding Impressions}" Width="100"/>
+                                    <DataGridTextColumn Header="Clicks" Binding="{Binding Clicks}" Width="80"/>
+                                    <DataGridTextColumn Header="Conversions" Binding="{Binding Conversions}" Width="100"/>
+                                    <DataGridTextColumn Header="CTR" Binding="{Binding CTR, StringFormat='F2%'}" Width="80"/>
+                                    <DataGridTextColumn Header="CPA" Binding="{Binding CPA, StringFormat='C2'}" Width="80"/>
+                                    <DataGridTextColumn Header="Score" Binding="{Binding PerformanceScore, StringFormat='F0'}" Width="80"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <!-- Underperforming Ads -->
+                    <materialDesign:Card Grid.Row="1" Margin="8" Padding="16">
+                        <StackPanel>
+                            <TextBlock Text="Underperforming Ads" FontSize="16"
+                                      FontWeight="Bold" Margin="0,0,0,12"
+                                      Foreground="{DynamicResource ErrorBrush}"/>
+
+                            <DataGrid ItemsSource="{Binding UnderperformingAds}"
+                                     AutoGenerateColumns="False"
+                                     IsReadOnly="True"
+                                     Height="300">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Headline" Binding="{Binding Headline}" Width="*"/>
+                                    <DataGridTextColumn Header="Impressions" Binding="{Binding Impressions}" Width="100"/>
+                                    <DataGridTextColumn Header="Clicks" Binding="{Binding Clicks}" Width="80"/>
+                                    <DataGridTextColumn Header="Conversions" Binding="{Binding Conversions}" Width="100"/>
+                                    <DataGridTextColumn Header="CTR" Binding="{Binding CTR, StringFormat='F2%'}" Width="80"/>
+                                    <DataGridTextColumn Header="CPA" Binding="{Binding CPA, StringFormat='C2'}" Width="80"/>
+                                    <DataGridTextColumn Header="Score" Binding="{Binding PerformanceScore, StringFormat='F0'}" Width="80"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </materialDesign:Card>
+                </Grid>
+            </TabItem>
+
+            <!-- Keywords Tab -->
+            <TabItem Header="Keywords">
+                <DataGrid ItemsSource="{Binding Keywords}"
+                         AutoGenerateColumns="False"
+                         IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Keyword" Binding="{Binding Text}" Width="*"/>
+                        <DataGridTextColumn Header="Match Type" Binding="{Binding MatchType}" Width="100"/>
+                        <DataGridTextColumn Header="Quality Score" Binding="{Binding QualityScore}" Width="100"/>
+                        <DataGridTextColumn Header="Effectiveness" Binding="{Binding EffectivenessScore, StringFormat='F0'}" Width="100"/>
+                        <DataGridTextColumn Header="Impressions" Binding="{Binding Impressions}" Width="100"/>
+                        <DataGridTextColumn Header="Clicks" Binding="{Binding Clicks}" Width="80"/>
+                        <DataGridTextColumn Header="CTR" Binding="{Binding CTR, StringFormat='F2%'}" Width="80"/>
+                        <DataGridTextColumn Header="Conversions" Binding="{Binding Conversions}" Width="100"/>
+                        <DataGridTextColumn Header="Cost" Binding="{Binding Cost, StringFormat='C2'}" Width="80"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+        </TabControl>
+
+        <!-- Loading Overlay -->
+        <Grid x:Name="LoadingOverlay" Grid.Row="2" Background="#CC000000"
+              Visibility="Collapsed">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="200" Height="4" Margin="0,0,0,16"/>
+                <TextBlock Text="Analyzing campaign..." Foreground="White"
+                          HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>
