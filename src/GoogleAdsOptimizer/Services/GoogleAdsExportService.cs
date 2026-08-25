@@ -4,10 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Google.Ads.GoogleAds.Lib;
-using Google.Ads.Google Ads.V17.Common;
-using Google.Ads.GoogleAds.V17.Enums;
-using Google.Ads.GoogleAds.V17.Resources;
+using GoogleAdsOptimizer.Models;
 using Newtonsoft.Json;
 
 namespace GoogleAdsOptimizer.Services
@@ -23,7 +20,7 @@ namespace GoogleAdsOptimizer.Services
         /// <summary>
         /// Generate Google Ads Editor-compatible CSV export for campaigns
         /// </summary>
-        public async Task<string> ExportCampaignsToEditorFormat(IEnumerable<CampaignData> campaigns)
+        public async Task<string> ExportCampaignsToEditorFormat(IEnumerable<CampaignExportData> campaigns)
         {
             var csv = new StringBuilder();
 
@@ -57,7 +54,7 @@ namespace GoogleAdsOptimizer.Services
         /// <summary>
         /// Generate Google Ads Editor-compatible CSV export for ad groups
         /// </summary>
-        public async Task<string> ExportAdGroupsToEditorFormat(IEnumerable<AdGroupData> adGroups)
+        public async Task<string> ExportAdGroupsToEditorFormat(IEnumerable<AdGroupExportData> adGroups)
         {
             var csv = new StringBuilder();
 
@@ -86,7 +83,7 @@ namespace GoogleAdsOptimizer.Services
         /// <summary>
         /// Generate Google Ads Editor-compatible CSV export for text ads
         /// </summary>
-        public async Task<string> ExportTextAdsToEditorFormat(IEnumerable<TextAdData> ads)
+        public async Task<string> ExportTextAdsToEditorFormat(IEnumerable<TextAdExportData> ads)
         {
             var csv = new StringBuilder();
 
@@ -123,7 +120,7 @@ namespace GoogleAdsOptimizer.Services
         /// <summary>
         /// Generate Google Ads Editor-compatible CSV export for keywords
         /// </summary>
-        public async Task<string> ExportKeywordsToEditorFormat(IEnumerable<KeywordData> keywords)
+        public async Task<string> ExportKeywordsToEditorFormat(IEnumerable<KeywordExportData> keywords)
         {
             var csv = new StringBuilder();
 
@@ -341,10 +338,10 @@ For support, visit: https://github.com/UPB-FLL/google-ads-optimizer";
 
     public class CampaignPackageData
     {
-        public IEnumerable<CampaignData> Campaigns { get; set; }
-        public IEnumerable<AdGroupData> AdGroups { get; set; }
-        public IEnumerable<TextAdData> TextAds { get; set; }
-        public IEnumerable<KeywordData> Keywords { get; set; }
+        public IEnumerable<CampaignExportData> Campaigns { get; set; }
+        public IEnumerable<AdGroupExportData> AdGroups { get; set; }
+        public IEnumerable<TextAdExportData> TextAds { get; set; }
+        public IEnumerable<KeywordExportData> Keywords { get; set; }
         public IEnumerable<ImageData> Images { get; set; }
     }
 }

@@ -8,6 +8,7 @@ using Google.Ads.GoogleAds.V17.Common;
 using Google.Ads.GoogleAds.V17.Enums;
 using Google.Ads.GoogleAds.V17.Resources;
 using Google.Ads.GoogleAds.V17.Services;
+using GoogleAdsOptimizer.Models;
 
 namespace GoogleAdsOptimizer.Services
 {
@@ -70,7 +71,7 @@ namespace GoogleAdsOptimizer.Services
         /// <summary>
         /// Retrieve all campaigns with performance metrics
         /// </summary>
-        public async Task<List<CampaignData>> GetCampaignsWithMetricsAsync(DateTime startDate, DateTime endDate)
+        public async Task<List<CampaignExportData>> GetCampaignsWithMetricsAsync(DateTime startDate, DateTime endDate)
         {
             var service = _client.GetService(GoogleAdsServiceClient.Name);
             var dateFormat = "yyyy-MM-dd";
@@ -106,7 +107,7 @@ namespace GoogleAdsOptimizer.Services
 
             foreach (var row in response)
             {
-                var campaign = new CampaignData
+                var campaign = new CampaignExportData
                 {
                     Id = row.Campaign.Id,
                     Name = row.Campaign.Name,
@@ -146,7 +147,7 @@ namespace GoogleAdsOptimizer.Services
         /// <summary>
         /// Get ad groups with performance data
         /// </summary>
-        public async Task<List<AdGroupData>> GetAdGroupsWithMetricsAsync(string campaignId, DateTime startDate, DateTime endDate)
+        public async Task<List<AdGroupExportData>> GetAdGroupsWithMetricsAsync(string campaignId, DateTime startDate, DateTime endDate)
         {
             var service = _client.GetService(GoogleAdsServiceClient.Name);
             var dateFormat = "yyyy-MM-dd";
@@ -178,7 +179,7 @@ namespace GoogleAdsOptimizer.Services
 
             foreach (var row in response)
             {
-                var adGroup = new AdGroupData
+                var adGroup = new AdGroupExportData
                 {
                     Id = row.AdGroup.Id,
                     Name = row.AdGroup.Name,
@@ -213,7 +214,7 @@ namespace GoogleAdsOptimizer.Services
         /// <summary>
         /// Get ads with performance data for analysis
         /// </summary>
-        public async Task<List<TextAdData>> GetAdsWithMetricsAsync(string campaignId, DateTime startDate, DateTime endDate)
+        public async Task<List<TextAdExportData>> GetAdsWithMetricsAsync(string campaignId, DateTime startDate, DateTime endDate)
         {
             var service = _client.GetService(GoogleAdsServiceClient.Name);
             var dateFormat = "yyyy-MM-dd";
@@ -253,7 +254,7 @@ namespace GoogleAdsOptimizer.Services
             {
                 var expandedAd = row.AdGroupAd.Ad.ExpandedTextAd;
 
-                var ad = new TextAdData
+                var ad = new TextAdExportData
                 {
                     Id = row.AdGroupAd.Id,
                     Name = row.AdGroup.Name,
@@ -291,7 +292,7 @@ namespace GoogleAdsOptimizer.Services
         /// <summary>
         /// Get keywords with performance data
         /// </summary>
-        public async Task<List<KeywordData>> GetKeywordsWithMetricsAsync(string campaignId, DateTime startDate, DateTime endDate)
+        public async Task<List<KeywordExportData>> GetKeywordsWithMetricsAsync(string campaignId, DateTime startDate, DateTime endDate)
         {
             var service = _client.GetService(GoogleAdsServiceClient.Name);
             var dateFormat = "yyyy-MM-dd";
@@ -322,7 +323,7 @@ namespace GoogleAdsOptimizer.Services
 
             foreach (var row in response)
             {
-                var keyword = new KeywordData
+                var keyword = new KeywordExportData
                 {
                     Id = row.AdGroupCriterion.CriterionId,
                     Text = row.AdGroupCriterion.Keyword.Text,
@@ -355,7 +356,7 @@ namespace GoogleAdsOptimizer.Services
         /// <summary>
         /// Calculate a performance score for an ad (0-100)
         /// </summary>
-        private double CalculateAdPerformanceScore(TextAdData ad)
+        private double CalculateAdPerformanceScore(TextAdExportData ad)
         {
             var score = 50.0; // Base score
 
@@ -382,7 +383,7 @@ namespace GoogleAdsOptimizer.Services
         /// <summary>
         /// Calculate effectiveness score for a keyword (0-100)
         /// </summary>
-        private double CalculateKeywordEffectiveness(KeywordData keyword)
+        private double CalculateKeywordEffectiveness(KeywordExportData keyword)
         {
             var score = 50.0;
 
@@ -412,114 +413,5 @@ namespace GoogleAdsOptimizer.Services
                 _isDisposed = true;
             }
         }
-    }
-
-    // Data models for Google Ads entities
-    public class CampaignData
-    {
-        public long Id { get; set; }
-        public string Name { get; set; }
-        public CampaignStatus Status { get; set; }
-        public AdvertisingChannelType AdvertisingChannelType { get; set; }
-        public DateTime? StartDate { get; set; }
-        public DateTime? EndDate { get; set; }
-        public double? DailyBudget { get; set; }
-        public string BiddingStrategyType { get; set; }
-        public double? TargetCpa { get; set; }
-        public double? TargetRoas { get; set; }
-        public string CampaignType { get; set; }
-
-        // Performance metrics
-        public long Impressions { get; set; }
-        public long Clicks { get; set; }
-        public double Cost { get; set; }
-        public double Conversions { get; set; }
-        public double CostPerConversion { get; set; }
-        public double ClickThroughRate { get; set; }
-        public double ConversionValue { get; set; }
-        public double ValuePerConversion { get; set; }
-        public double Roi { get; set; }
-    }
-
-    public class AdGroupData
-    {
-        public long Id { get; set; }
-        public string Name { get; set; }
-        public AdGroupStatus Status { get; set; }
-        public AdGroupType AdGroupType { get; set; }
-        public string CampaignId { get; set; }
-        public string CampaignName { get; set; }
-        public double? DefaultBid { get; set; }
-        public double? CpaBid { get; set; }
-        public double? RoasBid { get; set; }
-        public double? TargetCpa { get; set; }
-
-        // Performance metrics
-        public long Impressions { get; set; }
-        public long Clicks { get; set; }
-        public double Cost { get; set; }
-        public double Conversions { get; set; }
-        public double ClickThroughRate { get; set; }
-        public double CostPerConversion { get; set; }
-        public double Roi { get; set; }
-    }
-
-    public class TextAdData
-    {
-        public long Id { get; set; }
-        public string Name { get; set; }
-        public string CampaignName { get; set; }
-        public AdGroupAdStatus Status { get; set; }
-        public ApprovalStatus ApprovalStatus { get; set; }
-        public string Headline1 { get; set; }
-        public string Headline2 { get; set; }
-        public string Headline3 { get; set; }
-        public string Description { get; set; }
-        public string Description2 { get; set; }
-        public string FinalUrl { get; set; }
-        public string DisplayUrl { get; set; }
-        public string TrackingTemplate { get; set; }
-        public object CustomParameters { get; set; }
-        public List<string> ImageNames { get; set; } = new List<string>();
-
-        // Performance metrics
-        public long Impressions { get; set; }
-        public long Clicks { get; set; }
-        public double Cost { get; set; }
-        public double Conversions { get; set; }
-        public double ClickThroughRate { get; set; }
-        public double CostPerConversion { get; set; }
-        public double PerformanceScore { get; set; }
-    }
-
-    public class KeywordData
-    {
-        public long Id { get; set; }
-        public string Text { get; set; }
-        public KeywordMatchType MatchType { get; set; }
-        public AdGroupCriterionStatus Status { get; set; }
-        public string CampaignName { get; set; }
-        public string AdGroupName { get; set; }
-        public double? CpcBid { get; set; }
-        public double? FirstPageBid { get; set; }
-        public int QualityScore { get; set; }
-
-        // Performance metrics
-        public long Impressions { get; set; }
-        public long Clicks { get; set; }
-        public double Cost { get; set; }
-        public double Conversions { get; set; }
-        public double ClickThroughRate { get; set; }
-        public double CostPerConversion { get; set; }
-        public double EffectivenessScore { get; set; }
-    }
-
-    public class ImageData
-    {
-        public string Name { get; set; }
-        public string FilePath { get; set; }
-        public int Width { get; set; }
-        public int Height { get; set; }
-        public string MimeType { get; set; }
     }
 }

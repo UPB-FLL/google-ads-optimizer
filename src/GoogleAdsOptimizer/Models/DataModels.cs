@@ -220,4 +220,103 @@ namespace GoogleAdsOptimizer.Models
             return result;
         }
     }
+
+    // Additional data models for Google Ads export functionality
+    public class CampaignExportData
+    {
+        public string Name { get; set; }
+        public CampaignStatus Status { get; set; }
+        public double? DailyBudget { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public AdvertisingChannelType AdvertisingChannelType { get; set; }
+        public double? TargetCpa { get; set; }
+        public double? TargetRoas { get; set; }
+        public string BiddingStrategyType { get; set; }
+        public CampaignType CampaignType { get; set; }
+        public string Id { get; set; }
+
+        // Performance metrics for internal use
+        public long Impressions { get; set; }
+        public long Clicks { get; set; }
+        public double Cost { get; set; }
+        public double Conversions { get; set; }
+        public double CostPerConversion { get; set; }
+        public double ClickThroughRate { get; set; }
+        public double ConversionValue { get; set; }
+        public double ValuePerConversion { get; set; }
+        public double Roi { get; set; }
+    }
+
+    public class AdGroupExportData
+    {
+        public string CampaignName { get; set; }
+        public string Name { get; set; }
+        public CampaignStatus Status { get; set; }
+        public double? DefaultBid { get; set; }
+        public AdGroupType AdGroupType { get; set; }
+        public double? CpaBid { get; set; }
+        public double? RoasBid { get; set; }
+        public string Id { get; set; }
+        public string CampaignId { get; set; }
+
+        // Performance metrics for internal use
+        public long Impressions { get; set; }
+        public long Clicks { get; set; }
+        public double Cost { get; set; }
+        public double Conversions { get; set; }
+        public double ClickThroughRate { get; set; }
+        public double CostPerConversion { get; set; }
+        public double Roi { get; set; }
+    }
+
+    public class TextAdExportData
+    {
+        public string CampaignName { get; set; }
+        public string AdGroupName { get; set; }
+        public string Name { get; set; }
+        public CampaignStatus Status { get; set; }
+        public string Headline1 { get; set; }
+        public string Headline2 { get; set; }
+        public string Headline3 { get; set; }
+        public string Description { get; set; }
+        public string Description2 { get; set; }
+        public string DisplayUrl { get; set; }
+        public string FinalUrl { get; set; }
+        public string TrackingTemplate { get; set; }
+        public object CustomParameters { get; set; }
+        public List<string> ImageNames { get; set; } = new List<string>();
+        public string Id { get; set; }
+
+        // Performance metrics for internal use
+        public long Impressions { get; set; }
+        public long Clicks { get; set; }
+        public double Cost { get; set; }
+        public double Conversions { get; set; }
+        public double ClickThroughRate { get; set; }
+        public double CostPerConversion { get; set; }
+        public double PerformanceScore { get; set; }
+    }
+
+    public class KeywordExportData
+    {
+        public string CampaignName { get; set; }
+        public string AdGroupName { get; set; }
+        public string Text { get; set; }
+        public CampaignStatus Status { get; set; }
+        public KeywordMatchType MatchType { get; set; }
+        public double? CpcBid { get; set; }
+        public double? FirstPageBid { get; set; }
+        public int? QualityScore { get; set; }
+        public string Id { get; set; }
+
+        // Performance metrics for internal use
+        public long Impressions { get; set; }
+        public long Clicks { get; set; }
+        public double Cost { get; set; }
+        public double Conversions { get; set; }
+        public double ClickThroughRate { get; set; }
+        public double CostPerConversion { get; set; }
+        public double EffectivenessScore { get; set; }
+    }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using GoogleAdsOptimizer.Models;
 
 namespace GoogleAdsOptimizer.Services
 {
@@ -111,7 +112,7 @@ namespace GoogleAdsOptimizer.Services
             return accountAnalysis;
         }
 
-        private CampaignPerformanceAnalysis AnalyzeCampaignPerformance(CampaignData campaign)
+        private CampaignPerformanceAnalysis AnalyzeCampaignPerformance(CampaignExportData campaign)
         {
             var analysis = new CampaignPerformanceAnalysis
             {
@@ -132,7 +133,7 @@ namespace GoogleAdsOptimizer.Services
             return analysis;
         }
 
-        private List<AdGroupPerformance> AnalyzeAdGroups(List<AdGroupData> adGroups)
+        private List<AdGroupPerformance> AnalyzeAdGroups(List<AdGroupExportData> adGroups)
         {
             return adGroups.Select(ag => new AdGroupPerformance
             {
@@ -149,7 +150,7 @@ namespace GoogleAdsOptimizer.Services
             }).OrderByDescending(ag => ag.PerformanceScore).ToList();
         }
 
-        private List<AdPerformance> AnalyzeAds(List<TextAdData> ads)
+        private List<AdPerformance> AnalyzeAds(List<TextAdExportData> ads)
         {
             var adPerformance = new List<AdPerformance>();
 
@@ -194,7 +195,7 @@ namespace GoogleAdsOptimizer.Services
             return adPerformance.OrderByDescending(ap => ap.PerformanceScore).ToList();
         }
 
-        private List<KeywordPerformance> AnalyzeKeywords(List<KeywordData> keywords)
+        private List<KeywordPerformance> AnalyzeKeywords(List<KeywordExportData> keywords)
         {
             return keywords.Select(kw => new KeywordPerformance
             {
@@ -309,7 +310,7 @@ namespace GoogleAdsOptimizer.Services
             return recommendations;
         }
 
-        private async Task<AIInsights> GetAIInsights(CampaignData campaign, List<TextAdData> ads, DateTime startDate, DateTime endDate)
+        private async Task<AIInsights> GetAIInsights(CampaignExportData campaign, List<TextAdExportData> ads, DateTime startDate, DateTime endDate)
         {
             try
             {
@@ -359,7 +360,7 @@ namespace GoogleAdsOptimizer.Services
         }
 
         // Helper calculation methods
-        private double CalculateCampaignScore(CampaignData campaign)
+        private double CalculateCampaignScore(CampaignExportData campaign)
         {
             var score = 50.0;
 
@@ -388,27 +389,27 @@ namespace GoogleAdsOptimizer.Services
             return Math.Max(0, Math.Min(100, score));
         }
 
-        private double CalculateBudgetUtilization(CampaignData campaign)
+        private double CalculateBudgetUtilization(CampaignExportData campaign)
         {
             return campaign.DailyBudget > 0 ? (campaign.Cost / campaign.DailyBudget) : 0;
         }
 
-        private double CalculateROAScore(CampaignData campaign)
+        private double CalculateROAScore(CampaignExportData campaign)
         {
             return campaign.Roi;
         }
 
-        private double CalculateConversionRate(CampaignData campaign)
+        private double CalculateConversionRate(CampaignExportData campaign)
         {
             return campaign.Impressions > 0 ? (campaign.Conversions / campaign.Impressions) * 100 : 0;
         }
 
-        private double CalculateCostEfficiency(CampaignData campaign)
+        private double CalculateCostEfficiency(CampaignExportData campaign)
         {
             return campaign.CostPerConversion;
         }
 
-        private double CalculateAdGroupScore(AdGroupData adGroup)
+        private double CalculateAdGroupScore(AdGroupExportData adGroup)
         {
             var score = 50.0;
 
@@ -420,7 +421,7 @@ namespace GoogleAdsOptimizer.Services
             return Math.Max(0, Math.Min(100, score));
         }
 
-        private PerformanceStatus DetermineAdGroupStatus(AdGroupData adGroup)
+        private PerformanceStatus DetermineAdGroupStatus(AdGroupExportData adGroup)
         {
             var score = CalculateAdGroupScore(adGroup);
             return score >= 70 ? PerformanceStatus.Excellent :
@@ -429,7 +430,7 @@ namespace GoogleAdsOptimizer.Services
                    PerformanceStatus.Poor;
         }
 
-        private PerformanceStatus DetermineAdStatus(TextAdData ad)
+        private PerformanceStatus DetermineAdStatus(TextAdExportData ad)
         {
             return ad.PerformanceScore >= 70 ? PerformanceStatus.Excellent :
                    ad.PerformanceScore >= 50 ? PerformanceStatus.Good :
@@ -437,7 +438,7 @@ namespace GoogleAdsOptimizer.Services
                    PerformanceStatus.Poor;
         }
 
-        private KeywordStatus DetermineKeywordStatus(KeywordData keyword)
+        private KeywordStatus DetermineKeywordStatus(KeywordExportData keyword)
         {
             if (keyword.QualityScore >= 8 && keyword.EffectivenessScore >= 70)
                 return KeywordStatus.Excellent;
@@ -448,7 +449,7 @@ namespace GoogleAdsOptimizer.Services
             return KeywordStatus.Poor;
         }
 
-        private string GetAdGroupRecommendation(AdGroupData adGroup)
+        private string GetAdGroupRecommendation(AdGroupExportData adGroup)
         {
             if (adGroup.Conversions == 0 && adGroup.Impressions > 100)
                 return "Consider pausing - no conversions despite good impressions";
@@ -471,7 +472,7 @@ namespace GoogleAdsOptimizer.Services
             };
         }
 
-        private string GetKeywordRecommendation(KeywordData keyword)
+        private string GetKeywordRecommendation(KeywordExportData keyword)
         {
             if (keyword.QualityScore <= 3)
                 return "Improve ad relevance or landing page experience";
@@ -486,7 +487,7 @@ namespace GoogleAdsOptimizer.Services
     // Analysis result models
     public class ComprehensiveAnalysis
     {
-        public CampaignData Campaign { get; set; }
+        public CampaignExportData Campaign { get; set; }
         public DateTime AnalysisDate { get; set; }
         public DateRange DateRange { get; set; }
         public CampaignPerformanceAnalysis CampaignPerformance { get; set; }

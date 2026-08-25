@@ -21,7 +21,8 @@ namespace GoogleAdsOptimizer
             services.AddSingleton<Services.GoogleAdsService>();
             services.AddSingleton<Services.GPTService>();
             services.AddSingleton<Services.CampaignAnalyzer>();
-            services.AddSingleton<Services.AdCopyGenerator>();
+            services.AddSingleton<Services.UpdateService>();
+            services.AddSingleton<Services.GoogleAdsExportService>();
 
             // Register ViewModels
             services.AddTransient<ViewModels.MainViewModel>();
