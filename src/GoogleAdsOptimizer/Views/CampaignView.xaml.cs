@@ -114,9 +114,9 @@ namespace GoogleAdsOptimizer.Views
                 System.Windows.Media.Brushes.Green : System.Windows.Media.Brushes.Orange;
         }
 
-        private async void Refresh_Click(object sender, RoutedEventArgs e)
+        private void Refresh_Click(object sender, RoutedEventArgs e)
         {
-            await LoadCampaigns();
+            LoadCampaigns();
         }
 
         private async void ExportToEditor_Click(object sender, RoutedEventArgs e)

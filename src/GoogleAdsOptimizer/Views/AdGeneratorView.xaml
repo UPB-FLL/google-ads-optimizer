@@ -13,7 +13,7 @@
 
         <!-- Header -->
         <materialDesign:ColorZone Grid.Row="0" Mode="PrimaryMid" Padding="16"
-                                  materialDesign:Elevation="Dp4">
+>
             <DockPanel>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
                     <Button Style="{StaticResource MaterialDesignIconButton}"
@@ -46,7 +46,7 @@
 
             <!-- Left Panel - Input Controls -->
             <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="16" Spacing="16">
+                <StackPanel Margin="16">
                     <!-- Brand Research Section -->
                     <materialDesign:Card Padding="16">
                         <StackPanel>
@@ -223,6 +223,7 @@
 
                 <!-- Generated Ads List -->
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <Grid>
                     <ItemsControl ItemsSource="{Binding GeneratedAds}"
                                 Margin="8">
                         <ItemsControl.ItemTemplate>
@@ -369,7 +370,8 @@
                               HorizontalAlignment="Center"
                               VerticalAlignment="Center"
                               Visibility="Collapsed"/>
-                </Grid>
+                    </Grid>
+                </ScrollViewer>
 
                 <!-- Loading Overlay -->
                 <Grid x:Name="LoadingOverlay" Grid.Row="1"

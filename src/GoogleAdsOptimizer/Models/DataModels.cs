@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GoogleAdsOptimizer.Models
 {
@@ -318,5 +319,61 @@ namespace GoogleAdsOptimizer.Models
         public double ClickThroughRate { get; set; }
         public double CostPerConversion { get; set; }
         public double EffectivenessScore { get; set; }
+    }
+
+    public enum CampaignStatus
+    {
+        Unspecified,
+        Unknown,
+        Enabled,
+        Paused,
+        Removed
+    }
+
+    public enum AdvertisingChannelType
+    {
+        Unspecified,
+        Search,
+        Display,
+        Shopping,
+        Video,
+        MultiChannel,
+        PerformanceMax,
+        Discovery,
+        Local,
+        Smart
+    }
+
+    public enum CampaignType
+    {
+        Standard,
+        Advanced,
+        DynamicSearchAds,
+        ShoppingComparisonListing,
+        VideoAction,
+        AppPromotion,
+        Local
+    }
+
+    public enum AdGroupType
+    {
+        Standard,
+        SearchStandard,
+        DisplayStandard,
+        ShoppingProductShopping,
+        ShoppingShowcaseAds,
+        ShoppingComparisonListingAds,
+        ShoppingSmartAds,
+        VideoAction,
+        VideoOutstream,
+        VideoTrueViewInStream,
+        AppCampaign
+    }
+
+    public enum KeywordMatchType
+    {
+        Broad,
+        Phrase,
+        Exact
     }
 }

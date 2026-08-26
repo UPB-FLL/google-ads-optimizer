@@ -27,7 +27,7 @@ namespace GoogleAdsOptimizer.Services
         private double _downloadProgress;
         private string _statusMessage;
 
-        public event EventHandler<UpdateAvailableEventArgs> UpdateAvailable;
+        public event EventHandler<UpdateAvailableEventArgs> UpdateBecameAvailable;
 
         public UpdateService()
         {
@@ -196,7 +196,7 @@ namespace GoogleAdsOptimizer.Services
                     StatusMessage = $"Update available: {_currentVersion} → {latestUpdate.version}";
 
                     // Notify listeners
-                    UpdateAvailable?.Invoke(this, new UpdateAvailableEventArgs
+                    UpdateBecameAvailable?.Invoke(this, new UpdateAvailableEventArgs
                     {
                         CurrentVersion = _currentVersion,
                         LatestVersion = latestUpdate.version,
@@ -320,6 +320,7 @@ echo.
 timeout /t 5 /nobreak
 msiexec /i ""{installerPath}"" /quiet /norestart PROMPT=RESTART
 start "" ""{GetCurrentExecutablePath()}""
+";
 
                 await File.WriteAllTextAsync(scriptPath, scriptContent);
 

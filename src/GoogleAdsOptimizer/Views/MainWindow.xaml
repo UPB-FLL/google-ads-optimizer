@@ -15,7 +15,7 @@
 
         <!-- Header -->
         <materialDesign:ColorZone Grid.Row="0" Mode="PrimaryMid" Padding="16"
-                                  materialDesign:Elevation="Dp4">
+>
             <DockPanel>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
                     <Button Style="{StaticResource MaterialDesignIconButton}"
@@ -99,7 +99,7 @@
 
         <!-- Status Bar -->
         <materialDesign:ColorZone Grid.Row="2" Mode="PrimaryDark" Padding="8,4"
-                                  materialDesign:Elevation="Dp4">
+>
             <DockPanel>
                 <TextBlock DockPanel.Dock="Left" x:Name="StatusText"
                           Text="Ready | Not connected to Google Ads"/>

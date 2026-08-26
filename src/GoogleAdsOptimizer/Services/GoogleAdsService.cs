@@ -2,11 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Google.Ads.Gax.Config;
+using Google.Ads.GoogleAds.Config;
 using Google.Ads.GoogleAds.Lib;
-using Google.Ads.GoogleAds.V17;
-using Google.Ads.GoogleAds.V17.Common;
-using Google.Ads.GoogleAds.V17.Enums;
-using Google.Ads.GoogleAds.V17.Resources;
 using Google.Ads.GoogleAds.V17.Services;
 using GoogleAdsOptimizer.Models;
 
@@ -21,46 +19,47 @@ namespace GoogleAdsOptimizer.Services
         private string _customerId;
         private bool _isDisposed;
 
-        /// <summary>
-        /// Initialize the Google Ads client with OAuth credentials
-        /// </summary>
         public async Task InitializeAsync(string clientId, string clientSecret, string refreshToken, string developerToken, string customerId)
         {
             var config = new GoogleAdsConfig
             {
-                ClientId = clientId,
-                ClientSecret = clientSecret,
-                RefreshToken = refreshToken,
+                OAuth2ClientId = clientId,
+                OAuth2ClientSecret = clientSecret,
+                OAuth2RefreshToken = refreshToken,
+                OAuth2Mode = OAuth2Flow.APPLICATION,
                 DeveloperToken = developerToken,
-                LoginCustomerId = customerId
+                LoginCustomerId = customerId.Replace("-", "")
             };
 
             _client = new GoogleAdsClient(config);
-            _customerId = customerId;
+            _customerId = customerId.Replace("-", "");
 
-            // Test connection
             await TestConnectionAsync();
         }
 
-        /// <summary>
-        /// Test the connection to Google Ads API
-        /// </summary>
+        private async Task<List<GoogleAdsRow>> RunQueryAsync(string query)
+        {
+            var service = (GoogleAdsServiceClient)_client.GetService(Google.Ads.GoogleAds.Services.V17.GoogleAdsService);
+            var request = new SearchGoogleAdsRequest
+            {
+                CustomerId = _customerId,
+                Query = query
+            };
+
+            var pageable = service.SearchAsync(request);
+            var rows = new List<GoogleAdsRow>();
+            await foreach (var row in pageable)
+            {
+                rows.Add(row);
+            }
+            return rows;
+        }
+
         private async Task TestConnectionAsync()
         {
             try
             {
-                var service = _client.GetService(CustomerService.Name);
-                var request = new GetCustomerRequest
-                {
-                    ResourceName = ResourceNames.Customer(_customerId)
-                };
-
-                var customer = await service.GetCustomerAsync(request);
-
-                if (customer == null)
-                {
-                    throw new Exception("Unable to connect to Google Ads API");
-                }
+                await RunQueryAsync("SELECT customer.id FROM customer LIMIT 1");
             }
             catch (Exception ex)
             {
@@ -68,14 +67,20 @@ namespace GoogleAdsOptimizer.Services
             }
         }
 
-        /// <summary>
-        /// Retrieve all campaigns with performance metrics
-        /// </summary>
+        private static DateTime? ParseProtoDate(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return null;
+            return DateTime.TryParseExact(value, "yyyyMMdd", null,
+                System.Globalization.DateTimeStyles.None, out var d) ? d : (DateTime?)null;
+        }
+
+        private static T ParseEnum<T>(object rawValue) where T : struct, Enum
+        {
+            return Enum.TryParse<T>(rawValue?.ToString(), true, out var parsed) ? parsed : default;
+        }
+
         public async Task<List<CampaignExportData>> GetCampaignsWithMetricsAsync(DateTime startDate, DateTime endDate)
         {
-            var service = _client.GetService(GoogleAdsServiceClient.Name);
-            var dateFormat = "yyyy-MM-dd";
-
             var query = $@"
                 SELECT
                     campaign.id,
@@ -84,56 +89,44 @@ namespace GoogleAdsOptimizer.Services
                     campaign.advertising_channel_type,
                     campaign.start_date,
                     campaign.end_date,
-                    campaign.daily_budget,
-                    campaign.bidding_strategy_type,
-                    campaign.target_cpa,
-                    campaign.target_roas,
-                    campaign.campaign_trial_type,
+                    campaign_budget.amount_micros,
                     metrics.impressions,
                     metrics.clicks,
                     metrics.cost_micros,
                     metrics.conversions,
+                    metrics.conversions_value,
+                    metrics.ctr,
                     metrics.cost_per_conversion,
-                    metrics.click_through_rate,
-                    metrics.conversion_value,
                     metrics.value_per_conversion
                 FROM campaign
                 WHERE
-                    segments.date DURING {startDate.ToString(dateFormat)}, {endDate.ToString(dateFormat)}
+                    segments.date BETWEEN '{startDate:yyyy-MM-dd}' AND '{endDate:yyyy-MM-dd}'
                 ORDER BY metrics.cost_micros DESC";
 
-            var response = await service.SearchAsync(_customerId, query);
-            var campaigns = new List<CampaignData>();
-
-            foreach (var row in response)
+            var campaigns = new List<CampaignExportData>();
+            foreach (var row in await RunQueryAsync(query))
             {
                 var campaign = new CampaignExportData
                 {
-                    Id = row.Campaign.Id,
+                    Id = row.Campaign.Id.ToString(),
                     Name = row.Campaign.Name,
-                    Status = row.Campaign.Status,
-                    AdvertisingChannelType = row.Campaign.AdvertisingChannelType,
-                    StartDate = row.Campaign.StartDate,
-                    EndDate = row.Campaign.EndDate,
-                    DailyBudget = row.Campaign.DailyBudgetMicros / 1_000_000.0,
-                    BiddingStrategyType = row.Campaign.BiddingStrategyType.ToString(),
-                    TargetCpa = row.Campaign.TargetCpa?.Micros / 1_000_000.0,
-                    TargetRoas = row.Campaign.TargetRoas,
-                    CampaignType = row.Campaign.CampaignTrialType.ToString(),
+                    Status = ParseEnum<CampaignStatus>(row.Campaign.Status),
+                    AdvertisingChannelType = ParseEnum<AdvertisingChannelType>(row.Campaign.AdvertisingChannelType),
+                    StartDate = ParseProtoDate(row.Campaign.StartDate),
+                    EndDate = ParseProtoDate(row.Campaign.EndDate),
+                    DailyBudget = row.CampaignBudget?.AmountMicros / 1_000_000.0,
 
-                    // Metrics
                     Impressions = row.Metrics.Impressions,
                     Clicks = row.Metrics.Clicks,
                     Cost = row.Metrics.CostMicros / 1_000_000.0,
                     Conversions = row.Metrics.Conversions,
                     CostPerConversion = row.Metrics.CostPerConversion / 1_000_000.0,
-                    ClickThroughRate = row.Metrics.ClickThroughRate * 100,
-                    ConversionValue = row.Metrics.ConversionValue / 1_000_000.0,
-                    ValuePerConversion = row.Metrics.ValuePerConversion / 1_000_000.0
+                    ClickThroughRate = row.Metrics.Ctr * 100,
+                    ConversionValue = row.Metrics.ConversionsValue / 1_000_000.0,
+                    ValuePerConversion = row.Metrics.ValuePerConversion
                 };
 
-                // Calculate ROI
-                if (campaign.Conversions > 0)
+                if (campaign.Conversions > 0 && campaign.Cost > 0)
                 {
                     campaign.Roi = ((campaign.ConversionValue - campaign.Cost) / campaign.Cost) * 100;
                 }
@@ -144,63 +137,46 @@ namespace GoogleAdsOptimizer.Services
             return campaigns;
         }
 
-        /// <summary>
-        /// Get ad groups with performance data
-        /// </summary>
         public async Task<List<AdGroupExportData>> GetAdGroupsWithMetricsAsync(string campaignId, DateTime startDate, DateTime endDate)
         {
-            var service = _client.GetService(GoogleAdsServiceClient.Name);
-            var dateFormat = "yyyy-MM-dd";
-
             var query = $@"
                 SELECT
                     ad_group.id,
                     ad_group.name,
                     ad_group.status,
                     ad_group.type,
-                    ad_group.cpc_bid_micros,
-                    ad_group.cpa_bid_micros,
-                    ad_group.roas_bid,
-                    ad_group.target_cpa_micros,
                     metrics.impressions,
                     metrics.clicks,
                     metrics.cost_micros,
                     metrics.conversions,
-                    metrics.click_through_rate,
+                    metrics.ctr,
                     metrics.cost_per_conversion
                 FROM ad_group
                 WHERE
                     campaign.id = {campaignId}
-                    AND segments.date DURING {startDate.ToString(dateFormat)}, {endDate.ToString(dateFormat)}
+                    AND segments.date BETWEEN '{startDate:yyyy-MM-dd}' AND '{endDate:yyyy-MM-dd}'
                 ORDER BY metrics.cost_micros DESC";
 
-            var response = await service.SearchAsync(_customerId, query);
-            var adGroups = new List<AdGroupData>();
-
-            foreach (var row in response)
+            var adGroups = new List<AdGroupExportData>();
+            foreach (var row in await RunQueryAsync(query))
             {
                 var adGroup = new AdGroupExportData
                 {
-                    Id = row.AdGroup.Id,
+                    Id = row.AdGroup.Id.ToString(),
                     Name = row.AdGroup.Name,
-                    Status = row.AdGroup.Status,
-                    AdGroupType = row.AdGroup.Type,
+                    Status = ParseEnum<CampaignStatus>(row.AdGroup.Status),
+                    AdGroupType = ParseEnum<AdGroupType>(row.AdGroup.Type),
                     CampaignId = campaignId,
-                    DefaultBid = row.AdGroup.CpcBidMicros / 1_000_000.0,
-                    CpaBid = row.AdGroup.CpaBidMicros / 1_000_000.0,
-                    RoasBid = row.AdGroup.RoasBid,
-                    TargetCpa = row.AdGroup.TargetCpaMicros / 1_000_000.0,
 
-                    // Metrics
                     Impressions = row.Metrics.Impressions,
                     Clicks = row.Metrics.Clicks,
                     Cost = row.Metrics.CostMicros / 1_000_000.0,
                     Conversions = row.Metrics.Conversions,
-                    ClickThroughRate = row.Metrics.ClickThroughRate * 100,
+                    ClickThroughRate = row.Metrics.Ctr * 100,
                     CostPerConversion = row.Metrics.CostPerConversion / 1_000_000.0
                 };
 
-                if (adGroup.Conversions > 0)
+                if (adGroup.Conversions > 0 && adGroup.Cost > 0)
                 {
                     adGroup.Roi = ((adGroup.Cost / adGroup.Conversions) / adGroup.Cost) * 100;
                 }
@@ -211,14 +187,8 @@ namespace GoogleAdsOptimizer.Services
             return adGroups;
         }
 
-        /// <summary>
-        /// Get ads with performance data for analysis
-        /// </summary>
         public async Task<List<TextAdExportData>> GetAdsWithMetricsAsync(string campaignId, DateTime startDate, DateTime endDate)
         {
-            var service = _client.GetService(GoogleAdsServiceClient.Name);
-            var dateFormat = "yyyy-MM-dd";
-
             var query = $@"
                 SELECT
                     ad_group_ad.ad.id,
@@ -237,38 +207,33 @@ namespace GoogleAdsOptimizer.Services
                     metrics.clicks,
                     metrics.cost_micros,
                     metrics.conversions,
-                    metrics.click_through_rate,
                     metrics.ctr,
                     metrics.cost_per_conversion
                 FROM ad_group_ad
                 WHERE
                     campaign.id = {campaignId}
                     AND ad_group_ad.ad.type = EXPANDED_TEXT_AD
-                    AND segments.date DURING {startDate.ToString(dateFormat)}, {endDate.ToString(dateFormat)}
+                    AND segments.date BETWEEN '{startDate:yyyy-MM-dd}' AND '{endDate:yyyy-MM-dd}'
                 ORDER BY metrics.impressions DESC";
 
-            var response = await service.SearchAsync(_customerId, query);
-            var ads = new List<TextAdData>();
-
-            foreach (var row in response)
+            var ads = new List<TextAdExportData>();
+            foreach (var row in await RunQueryAsync(query))
             {
                 var expandedAd = row.AdGroupAd.Ad.ExpandedTextAd;
 
                 var ad = new TextAdExportData
                 {
-                    Id = row.AdGroupAd.Id,
+                    Id = row.AdGroupAd.Ad.Id.ToString(),
                     Name = row.AdGroup.Name,
                     CampaignName = row.Campaign.Name,
-                    Status = row.AdGroupAd.Status,
-                    ApprovalStatus = row.AdGroupAd.PolicySummary.ApprovalStatus,
+                    Status = ParseEnum<CampaignStatus>(row.AdGroupAd.Status),
                     Headline1 = expandedAd.HeadlinePart1,
                     Headline2 = expandedAd.HeadlinePart2,
                     Headline3 = expandedAd.HeadlinePart3,
                     Description = expandedAd.Description,
                     Description2 = expandedAd.Description2,
-                    FinalUrl = expandedAd.FinalUrls?.FirstOrDefault() ?? "",
+                    FinalUrl = row.AdGroupAd.Ad.FinalUrls?.FirstOrDefault() ?? "",
 
-                    // Metrics
                     Impressions = row.Metrics.Impressions,
                     Clicks = row.Metrics.Clicks,
                     Cost = row.Metrics.CostMicros / 1_000_000.0,
@@ -277,7 +242,6 @@ namespace GoogleAdsOptimizer.Services
                     CostPerConversion = row.Metrics.CostPerConversion / 1_000_000.0
                 };
 
-                // Calculate performance score
                 if (ad.Impressions > 0)
                 {
                     ad.PerformanceScore = CalculateAdPerformanceScore(ad);
@@ -289,59 +253,47 @@ namespace GoogleAdsOptimizer.Services
             return ads;
         }
 
-        /// <summary>
-        /// Get keywords with performance data
-        /// </summary>
         public async Task<List<KeywordExportData>> GetKeywordsWithMetricsAsync(string campaignId, DateTime startDate, DateTime endDate)
         {
-            var service = _client.GetService(GoogleAdsServiceClient.Name);
-            var dateFormat = "yyyy-MM-dd";
-
             var query = $@"
                 SELECT
                     ad_group_criterion.criterion_id,
                     ad_group_criterion.keyword.text,
                     ad_group_criterion.keyword.match_type,
                     ad_group_criterion.status,
-                    ad_group_criterion.bidding.strategy_cpc_bid_micros,
                     ad_group_criterion.quality_info.quality_score,
                     metrics.impressions,
                     metrics.clicks,
                     metrics.cost_micros,
                     metrics.conversions,
-                    metrics.click_through_rate,
+                    metrics.ctr,
                     metrics.cost_per_conversion
                 FROM ad_group_criterion
                 WHERE
                     campaign.id = {campaignId}
                     AND ad_group_criterion.type = KEYWORD
-                    AND segments.date DURING {startDate.ToString(dateFormat)}, {endDate.ToString(dateFormat)}
+                    AND segments.date BETWEEN '{startDate:yyyy-MM-dd}' AND '{endDate:yyyy-MM-dd}'
                 ORDER BY metrics.impressions DESC";
 
-            var response = await service.SearchAsync(_customerId, query);
-            var keywords = new List<KeywordData>();
-
-            foreach (var row in response)
+            var keywords = new List<KeywordExportData>();
+            foreach (var row in await RunQueryAsync(query))
             {
                 var keyword = new KeywordExportData
                 {
-                    Id = row.AdGroupCriterion.CriterionId,
+                    Id = row.AdGroupCriterion.CriterionId.ToString(),
                     Text = row.AdGroupCriterion.Keyword.Text,
-                    MatchType = row.AdGroupCriterion.Keyword.MatchType,
-                    Status = row.AdGroupCriterion.Status,
-                    CpcBid = row.AdGroupCriterion.Bidding.StrategyCpcBidMicros / 1_000_000.0,
-                    QualityScore = row.AdGroupCriterion.QualityInfo.QualityScore ?? 0,
+                    MatchType = ParseEnum<KeywordMatchType>(row.AdGroupCriterion.Keyword.MatchType),
+                    Status = ParseEnum<CampaignStatus>(row.AdGroupCriterion.Status),
+                    QualityScore = (int)(row.AdGroupCriterion.QualityInfo?.QualityScore ?? 0),
 
-                    // Metrics
                     Impressions = row.Metrics.Impressions,
                     Clicks = row.Metrics.Clicks,
                     Cost = row.Metrics.CostMicros / 1_000_000.0,
                     Conversions = row.Metrics.Conversions,
-                    ClickThroughRate = row.Metrics.ClickThroughRate * 100,
+                    ClickThroughRate = row.Metrics.Ctr * 100,
                     CostPerConversion = row.Metrics.CostPerConversion / 1_000_000.0
                 };
 
-                // Calculate keyword effectiveness
                 if (keyword.Impressions > 0)
                 {
                     keyword.EffectivenessScore = CalculateKeywordEffectiveness(keyword);
@@ -353,51 +305,39 @@ namespace GoogleAdsOptimizer.Services
             return keywords;
         }
 
-        /// <summary>
-        /// Calculate a performance score for an ad (0-100)
-        /// </summary>
         private double CalculateAdPerformanceScore(TextAdExportData ad)
         {
-            var score = 50.0; // Base score
+            var score = 50.0;
 
-            // Click-through rate impact (high impact)
             if (ad.ClickThroughRate > 5.0) score += 20;
             else if (ad.ClickThroughRate > 3.0) score += 15;
             else if (ad.ClickThroughRate > 1.0) score += 10;
             else if (ad.ClickThroughRate < 0.5) score -= 15;
 
-            // Conversion rate impact
             var conversionRate = ad.Impressions > 0 ? (ad.Conversions / ad.Impressions) * 100 : 0;
             if (conversionRate > 5.0) score += 20;
             else if (conversionRate > 2.0) score += 15;
             else if (conversionRate > 1.0) score += 10;
             else if (conversionRate < 0.5) score -= 10;
 
-            // Cost efficiency
             if (ad.CostPerConversion > 0 && ad.CostPerConversion < 10.0) score += 10;
             else if (ad.CostPerConversion > 50.0) score -= 15;
 
             return Math.Max(0, Math.Min(100, score));
         }
 
-        /// <summary>
-        /// Calculate effectiveness score for a keyword (0-100)
-        /// </summary>
         private double CalculateKeywordEffectiveness(KeywordExportData keyword)
         {
             var score = 50.0;
 
-            // Quality score impact
             if (keyword.QualityScore >= 8) score += 20;
             else if (keyword.QualityScore >= 6) score += 10;
             else if (keyword.QualityScore <= 3) score -= 15;
 
-            // Click-through rate
             if (keyword.ClickThroughRate > 5.0) score += 15;
             else if (keyword.ClickThroughRate > 2.0) score += 10;
             else if (keyword.ClickThroughRate < 1.0) score -= 10;
 
-            // Conversion performance
             if (keyword.Conversions > 10) score += 15;
             else if (keyword.Conversions > 5) score += 10;
             else if (keyword.Conversions == 0 && keyword.Impressions > 100) score -= 10;
@@ -409,7 +349,7 @@ namespace GoogleAdsOptimizer.Services
         {
             if (!_isDisposed)
             {
-                _client?.Dispose();
+                _client = null;
                 _isDisposed = true;
             }
         }

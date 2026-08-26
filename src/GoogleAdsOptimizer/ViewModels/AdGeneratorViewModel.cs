@@ -5,6 +5,8 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using GoogleAdsOptimizer.Services;
+using GoogleAdsOptimizer.Models;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GoogleAdsOptimizer.ViewModels
 {
@@ -341,14 +343,14 @@ namespace GoogleAdsOptimizer.ViewModels
                 {
                     Campaigns = new[]
                     {
-                        new CampaignData
+                        new CampaignExportData
                         {
                             Name = CampaignName,
                             Status = CampaignStatus.Enabled,
                             AdvertisingChannelType = AdvertisingChannelType.Search
                         }
                     },
-                    TextAds = selectedAds.Select(ad => new TextAdData
+                    TextAds = selectedAds.Select(ad => new TextAdExportData
                     {
                         Name = ad.CampaignName,
                         Headline1 = ad.Headline1,
@@ -358,7 +360,7 @@ namespace GoogleAdsOptimizer.ViewModels
                         Description2 = ad.Description2,
                         FinalUrl = ad.FinalUrl,
                         DisplayUrl = ad.DisplayUrl,
-                        Status = AdGroupAdStatus.Enabled,
+                        Status = CampaignStatus.Enabled,
                         CampaignName = CampaignName
                     }).ToList()
                 };

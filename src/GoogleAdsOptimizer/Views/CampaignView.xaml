@@ -14,7 +14,7 @@
 
         <!-- Header -->
         <materialDesign:ColorZone Grid.Row="0" Mode="PrimaryMid" Padding="16"
-                                  materialDesign:Elevation="Dp4">
+>
             <DockPanel>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
                     <Button Style="{StaticResource MaterialDesignIconButton}"
@@ -70,11 +70,11 @@
         </Grid>
 
         <!-- Content Tabs -->
-        <TabControl Grid.Row="2" materialDesign:Elevation="Dp4">
+        <TabControl Grid.Row="2">
             <!-- Overview Tab -->
             <TabItem Header="Overview">
                 <ScrollViewer>
-                    <StackPanel Margin="16" Spacing="16">
+                    <StackPanel Margin="16">
                         <!-- Analysis Summary -->
                         <materialDesign:Card Padding="16">
                             <Grid>

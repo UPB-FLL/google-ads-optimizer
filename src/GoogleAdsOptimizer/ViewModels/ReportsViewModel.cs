@@ -1,8 +1,10 @@
+using System.Linq;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using GoogleAdsOptimizer.Services;
 
 namespace GoogleAdsOptimizer.ViewModels

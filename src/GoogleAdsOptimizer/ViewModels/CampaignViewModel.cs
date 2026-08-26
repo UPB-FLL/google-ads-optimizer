@@ -4,7 +4,9 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using GoogleAdsOptimizer.Services;
+using GoogleAdsOptimizer.Models;
 
 namespace GoogleAdsOptimizer.ViewModels
 {
@@ -175,19 +177,19 @@ namespace GoogleAdsOptimizer.ViewModels
                 var packageData = new CampaignPackageData
                 {
                     Campaigns = new[] { CurrentAnalysis.Campaign },
-                    AdGroups = CurrentAnalysis.AdGroupPerformance.Select(ag => new AdGroupData
+                    AdGroups = CurrentAnalysis.AdGroupPerformance.Select(ag => new AdGroupExportData
                     {
                         Name = ag.AdGroupName,
-                        Status = AdGroupStatus.Enabled,
+                        Status = CampaignStatus.Enabled,
                         AdGroupType = AdGroupType.SearchStandard
                     }).ToList(),
-                    TextAds = CurrentAnalysis.AdPerformance.Select(ad => new TextAdData
+                    TextAds = CurrentAnalysis.AdPerformance.Select(ad => new TextAdExportData
                     {
                         Name = ad.Headline,
                         Headline1 = "Headline", // Would come from actual ad data
                         Headline2 = "Headline 2",
                         Description = "Description",
-                        Status = AdGroupAdStatus.Enabled
+                        Status = CampaignStatus.Enabled
                     }).ToList()
                 };
 

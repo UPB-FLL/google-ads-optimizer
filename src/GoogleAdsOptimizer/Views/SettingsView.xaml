@@ -13,7 +13,7 @@
 
         <!-- Header -->
         <materialDesign:ColorZone Grid.Row="0" Mode="PrimaryMid" Padding="16"
-                                  materialDesign:Elevation="Dp4">
+>
             <DockPanel>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
                     <Button Style="{StaticResource MaterialDesignIconButton}"
@@ -39,7 +39,7 @@
 
         <!-- Settings Content -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="16" Spacing="24">
+            <StackPanel Margin="16">
 
                 <!-- Connection Status Card -->
                 <materialDesign:Card Padding="16">
@@ -96,7 +96,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <StackPanel Grid.Column="0" Spacing="12">
+                            <StackPanel Grid.Column="0">
                                 <!-- Client ID -->
                                 <TextBox materialDesign:HintAssist.Hint="OAuth2 Client ID"
                                         x:Name="GoogleAdsClientIdTextBox"
@@ -146,7 +146,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <StackPanel Grid.Column="0" Spacing="12">
+                            <StackPanel Grid.Column="0">
                                 <!-- API Key -->
                                 <TextBox materialDesign:HintAssist.Hint="API Key"
                                         x:Name="OpenAIApiKeyTextBox"

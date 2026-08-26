@@ -14,7 +14,7 @@
 
         <!-- Header -->
         <materialDesign:ColorZone Grid.Row="0" Mode="PrimaryMid" Padding="16"
-                                  materialDesign:Elevation="Dp4">
+>
             <DockPanel>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
                     <Button Style="{StaticResource MaterialDesignIconButton}"
@@ -61,11 +61,11 @@
         </Grid>
 
         <!-- Main Content -->
-        <TabControl Grid.Row="2" materialDesign:Elevation="Dp4">
+        <TabControl Grid.Row="2">
             <!-- Account Overview Tab -->
             <TabItem Header="Account Overview">
                 <ScrollViewer>
-                    <StackPanel Margin="16" Spacing="16">
+                    <StackPanel Margin="16">
 
                         <!-- Account Metrics Cards -->
                         <materialDesign:Card Padding="16">

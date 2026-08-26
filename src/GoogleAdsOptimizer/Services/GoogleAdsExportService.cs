@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 
 namespace GoogleAdsOptimizer.Services
 {
+    using ImageData = Models.ImageAsset;
     /// <summary>
     /// Service for exporting data in Google Ads Editor-compatible format
     /// </summary>

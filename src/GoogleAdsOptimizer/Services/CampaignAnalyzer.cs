@@ -167,7 +167,7 @@ namespace GoogleAdsOptimizer.Services
                     CPA = ad.CostPerConversion,
                     PerformanceScore = ad.PerformanceScore,
                     Status = DetermineAdStatus(ad),
-                    ApprovalStatus = ad.ApprovalStatus.ToString()
+                    ApprovalStatus = ad.Status.ToString()
                 };
 
                 // Categorize ad performance
@@ -201,7 +201,7 @@ namespace GoogleAdsOptimizer.Services
             {
                 KeywordText = kw.Text,
                 MatchType = kw.MatchType.ToString(),
-                QualityScore = kw.QualityScore,
+                QualityScore = kw.QualityScore ?? 0,
                 EffectivenessScore = kw.EffectivenessScore,
                 Impressions = kw.Impressions,
                 Clicks = kw.Clicks,
@@ -327,7 +327,7 @@ namespace GoogleAdsOptimizer.Services
                     CostPerClick = campaign.Cost / campaign.Clicks,
                     CostPerAcquisition = campaign.CostPerConversion,
                     ReturnOnAdSpend = campaign.ConversionValue / campaign.Cost,
-                    DailyBudget = campaign.DailyBudget ?? 0,
+                    DailyBudget = (double?)campaign.DailyBudget ?? 0,
                     BidStrategy = campaign.BiddingStrategyType,
                     TopAds = ads.Take(5).Select(ad => new AdPerformanceData
                     {
@@ -345,7 +345,22 @@ namespace GoogleAdsOptimizer.Services
                     }).ToList()
                 };
 
-                return await _gptService.AnalyzeCampaignPerformanceAsync(performanceData);
+                var gptAnalysis = await _gptService.AnalyzeCampaignPerformanceAsync(performanceData);
+                return new AIInsights
+                {
+                    Strengths = gptAnalysis.Strengths ?? new List<string>(),
+                    Issues = gptAnalysis.Issues ?? new List<string>(),
+                    Recommendations = (gptAnalysis.Recommendations ?? new List<GptRecommendation>())
+                        .Select(r => new Recommendation
+                        {
+                            Priority = r.Priority == "high" ? RecommendationPriority.High
+                                     : r.Priority == "critical" ? RecommendationPriority.Critical
+                                     : r.Priority == "low" ? RecommendationPriority.Low
+                                     : RecommendationPriority.Medium,
+                            Action = r.Action,
+                            Title = r.Action
+                        }).ToList()
+                };
             }
             catch
             {
@@ -391,7 +406,7 @@ namespace GoogleAdsOptimizer.Services
 
         private double CalculateBudgetUtilization(CampaignExportData campaign)
         {
-            return campaign.DailyBudget > 0 ? (campaign.Cost / campaign.DailyBudget) : 0;
+            return campaign.DailyBudget > 0 ? (campaign.Cost / (campaign.DailyBudget ?? 1)) : 0;
         }
 
         private double CalculateROAScore(CampaignExportData campaign)
@@ -538,7 +553,7 @@ namespace GoogleAdsOptimizer.Services
 
     public class AdPerformance
     {
-        public long AdId { get; set; }
+        public string AdId { get; set; }
         public string Headline { get; set; }
         public long Impressions { get; set; }
         public long Clicks { get; set; }
@@ -580,6 +595,13 @@ namespace GoogleAdsOptimizer.Services
         public string Title { get; set; }
         public string Description { get; set; }
         public string Action { get; set; }
+    }
+
+    public class AIInsights
+    {
+        public List<string> Strengths { get; set; } = new List<string>();
+        public List<string> Issues { get; set; } = new List<string>();
+        public List<Recommendation> Recommendations { get; set; } = new List<Recommendation>();
     }
 
     public enum PerformanceStatus { Excellent, Good, Fair, Poor }

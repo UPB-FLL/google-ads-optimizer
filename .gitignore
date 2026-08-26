@@ -31,3 +31,9 @@ temp/
 # Build output
 dist/
 build/
+# .NET build artifacts
+bin/
+obj/
+publish/
+*.zip
+*.wixobj

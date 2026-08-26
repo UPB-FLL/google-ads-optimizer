@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Azure;
 using Azure.AI.OpenAI;
+using GoogleAdsOptimizer.Models;
 using Newtonsoft.Json;
 
 namespace GoogleAdsOptimizer.Services
@@ -51,11 +52,11 @@ namespace GoogleAdsOptimizer.Services
         {
             var options = new ChatCompletionsOptions
             {
-                Messages = { new ChatMessage(ChatRole.User, "Hello, are you working?") },
+                DeploymentName = _deploymentName, Messages = { new ChatRequestUserMessage("Hello, are you working?") },
                 MaxTokens = 10
             };
 
-            await _openAIClient.GetChatCompletionsAsync(_deploymentName, options);
+            await _openAIClient.GetChatCompletionsAsync(options);
         }
 
         /// <summary>
@@ -70,19 +71,19 @@ namespace GoogleAdsOptimizer.Services
             {
                 var options = new ChatCompletionsOptions
                 {
-                    Messages =
+                    DeploymentName = _deploymentName, Messages =
                     {
-                        new ChatMessage(ChatRole.System, GetSystemPrompt()),
-                        new ChatMessage(ChatRole.User, prompt)
+                        new ChatRequestSystemMessage(GetSystemPrompt()),
+                        new ChatRequestUserMessage(prompt)
                     },
                     MaxTokens = 2000,
-                    Temperature = 0.8,
-                    NucleusSamplingFactor = 0.9,
-                    FrequencyPenalty = 0.5,
-                    PresencePenalty = 0.5
+                    Temperature = 0.8f,
+                    NucleusSamplingFactor = 0.9f,
+                    FrequencyPenalty = 0.5f,
+                    PresencePenalty = 0.5f
                 };
 
-                var response = await _openAIClient.GetChatCompletionsAsync(_deploymentName, options);
+                var response = await _openAIClient.GetChatCompletionsAsync(options);
                 var generatedText = response.Value.Choices.First().Message.Content;
 
                 // Parse the generated ads from the response
@@ -93,8 +94,8 @@ namespace GoogleAdsOptimizer.Services
                 {
                     for (int i = 1; i < request.NumberOfVariations; i++)
                     {
-                        options.Temperature = 0.7 + (i * 0.1); // Vary temperature for diversity
-                        var variationResponse = await _openAIClient.GetChatCompletionsAsync(_deploymentName, options);
+                        options.Temperature = (float)(0.7 + (i * 0.1)); // Vary temperature for diversity
+                        var variationResponse = await _openAIClient.GetChatCompletionsAsync(options);
                         var variationText = variationResponse.Value.Choices.First().Message.Content;
                         var variationAds = ParseGeneratedAds(variationText, request);
                         ads.AddRange(variationAds);
@@ -120,17 +121,17 @@ namespace GoogleAdsOptimizer.Services
             {
                 var options = new ChatCompletionsOptions
                 {
-                    Messages =
+                    DeploymentName = _deploymentName, Messages =
                     {
-                        new ChatMessage(ChatRole.System, GetAnalysisSystemPrompt()),
-                        new ChatMessage(ChatRole.User, prompt)
+                        new ChatRequestSystemMessage(GetAnalysisSystemPrompt()),
+                        new ChatRequestUserMessage(prompt)
                     },
                     MaxTokens = 3000,
-                    Temperature = 0.3, // Lower temperature for more analytical responses
+                    Temperature = 0.3f, // Lower temperature for more analytical responses
                     ResponseFormat = ChatCompletionsResponseFormat.JsonObject
                 };
 
-                var response = await _openAIClient.GetChatCompletionsAsync(_deploymentName, options);
+                var response = await _openAIClient.GetChatCompletionsAsync(options);
                 var analysisJson = response.Value.Choices.First().Message.Content;
 
                 return JsonConvert.DeserializeObject<CampaignAnalysis>(analysisJson);
@@ -163,16 +164,16 @@ Provide a structured analysis that will help create brand-consistent advertising
             {
                 var options = new ChatCompletionsOptions
                 {
-                    Messages =
+                    DeploymentName = _deploymentName, Messages =
                     {
-                        new ChatMessage(ChatRole.System, "You are a brand research expert. Provide detailed, actionable brand analysis."),
-                        new ChatMessage(ChatRole.User, prompt)
+                        new ChatRequestSystemMessage("You are a brand research expert. Provide detailed, actionable brand analysis."),
+                        new ChatRequestUserMessage(prompt)
                     },
                     MaxTokens = 2500,
-                    Temperature = 0.4
+                    Temperature = 0.4f
                 };
 
-                var response = await _openAIClient.GetChatCompletionsAsync(_deploymentName, options);
+                var response = await _openAIClient.GetChatCompletionsAsync(options);
                 var researchText = response.Value.Choices.First().Message.Content;
 
                 return ParseBrandResearch(researchText);
@@ -194,16 +195,16 @@ Provide a structured analysis that will help create brand-consistent advertising
             {
                 var options = new ChatCompletionsOptions
                 {
-                    Messages =
+                    DeploymentName = _deploymentName, Messages =
                     {
-                        new ChatMessage(ChatRole.System, "You are a Google Ads keyword expert. Generate high-performing keywords with proper match types."),
-                        new ChatMessage(ChatRole.User, prompt)
+                        new ChatRequestSystemMessage("You are a Google Ads keyword expert. Generate high-performing keywords with proper match types."),
+                        new ChatRequestUserMessage(prompt)
                     },
                     MaxTokens = 2000,
-                    Temperature = 0.6
+                    Temperature = 0.6f
                 };
 
-                var response = await _openAIClient.GetChatCompletionsAsync(_deploymentName, options);
+                var response = await _openAIClient.GetChatCompletionsAsync(options);
                 var keywordsText = response.Value.Choices.First().Message.Content;
 
                 return ParseKeywordSuggestions(keywordsText);
@@ -524,7 +525,7 @@ Prioritize by relevance and commercial intent.";
         {
             if (!_isDisposed)
             {
-                _openAIClient?.Dispose();
+                _openAIClient = null;
                 _isDisposed = true;
             }
         }
@@ -591,20 +592,20 @@ Prioritize by relevance and commercial intent.";
         public double Cost { get; set; }
     }
 
-    public class CampaignAnalysis
-    {
-        public List<string> Strengths { get; set; }
-        public List<string> Issues { get; set; }
-        public List<Recommendation> Recommendations { get; set; }
-        public BudgetSuggestion BudgetSuggestions { get; set; }
-        public List<string> AdSuggestions { get; set; }
-    }
-
-    public class Recommendation
+    public class GptRecommendation
     {
         public string Priority { get; set; }
         public string Action { get; set; }
         public string Impact { get; set; }
+    }
+
+    public class CampaignAnalysis
+    {
+        public List<string> Strengths { get; set; }
+        public List<string> Issues { get; set; }
+        public List<GptRecommendation> Recommendations { get; set; }
+        public BudgetSuggestion BudgetSuggestions { get; set; }
+        public List<string> AdSuggestions { get; set; }
     }
 
     public class BudgetSuggestion
@@ -640,12 +641,5 @@ Prioritize by relevance and commercial intent.";
         public KeywordMatchType MatchType { get; set; }
         public int Priority { get; set; }
         public double? SuggestedBid { get; set; }
-    }
-
-    public enum KeywordMatchType
-    {
-        Broad,
-        Phrase,
-        Exact
     }
 }
